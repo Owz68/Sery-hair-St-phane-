@@ -198,8 +198,12 @@ async function init(){
  if(sb){var u=(await sb.auth.getSession()).data.session;if(u){await getRole(u.user.id);if(!role)await loadMe()}}
  if(!sb||role){await loadB();await loadO();await loadCL()}
  if(sb)sb.channel("bk").on("postgres_changes",{event:"*",schema:"public",table:"bookings"},async function(){if(role){await loadB();if($("sv")){grab();adm()}}}).on("postgres_changes",{event:"*",schema:"public",table:"orders"},async function(){if(role){await loadO();if($("sv")){grab();await syncStock();adm()}}}).subscribe();
- if(sb)sb.channel("stk").on("postgres_changes",{event:"*",schema:"public",table:"products"},async function(){if(role)return;var a=document.activeElement,t=a&&a.tagName;if(t=="INPUT"||t=="SELECT"||t=="TEXTAREA"||($("on")&&$("on").value))return;await load();view()}).subscribe();
+ if(sb)sb.channel("pub").on("postgres_changes",{event:"*",schema:"public",table:"products"},rfSoon).on("postgres_changes",{event:"*",schema:"public",table:"services"},rfSoon).on("postgres_changes",{event:"*",schema:"public",table:"settings"},rfSoon).subscribe();
+ if(sb){setInterval(refreshPub,20000);document.addEventListener("visibilitychange",function(){if(!document.hidden)refreshPub()});window.addEventListener("focus",refreshPub);window.addEventListener("online",refreshPub)}
  view();if(MODE=="admin"){if(role)adm();else $("lg").classList.remove("hid")}}
+var rfBusy=false,rfPend=false,rfD=0;
+function rfSoon(){clearTimeout(rfD);rfD=setTimeout(refreshPub,700)}
+async function refreshPub(){if(role||document.hidden||!sb)return;if(rfBusy){rfPend=true;return}rfBusy=true;try{var a=document.activeElement,t=a&&a.tagName,m=$("bkm");if(t=="INPUT"||t=="SELECT"||t=="TEXTAREA"||($("on")&&$("on").value)||(m&&!m.classList.contains("hid")))return;var s0=JSON.stringify(D);await load();if(JSON.stringify(D)!=s0){var y=window.scrollY;view();window.scrollTo(0,y)}}catch(e){}finally{rfBusy=false;if(rfPend){rfPend=false;setTimeout(refreshPub,300)}}}
 async function load(){
  if(sb){var a=await sb.from("settings").select("*").eq("id",1).maybeSingle(),b=await sb.from("services").select("*").order("position"),c=await sb.from("products").select("*").order("position");
   D={s:Object.assign({},DEF.s,a.data||{}),v:b.data||[],p:c.data||[]};D.p.forEach(function(x){x.s0=x.stock})}
