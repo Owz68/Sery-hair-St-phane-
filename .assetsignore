@@ -1,3 +1,7 @@
 *.sql
 wrangler.jsonc
 .assetsignore
+*.sql
+wrangler.jsonc
+.assetsignore
+.git
